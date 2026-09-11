@@ -1,0 +1,1191 @@
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f5ede0; font-family: 'ComingSoon', serif; min-height: 100vh; overflow-x: hidden; }
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* Toolbar */
+.toolbar {
+  background: #e8d5c0; border-bottom: 1.5px solid #c9b8a8;
+  padding: 8px 14px; display: flex; align-items: center; gap: 5px;
+  flex-wrap: wrap; position: sticky; top: 0; z-index: 100;
+}
+.toolbar-btn {
+  background: #f5ede0; border: 1.5px solid #c9b8a8; border-radius: 8px;
+  padding: 5px 10px; font-size: 13px; cursor: pointer; color: #7a5c45;
+  transition: all 0.1s; font-family: 'ComingSoon', serif;
+}
+.toolbar-btn:hover { background: #d4b896; color: #5a3c2a; transform: translateY(-1px); }
+.toolbar-btn:active { transform: scale(0.96); }
+.sep { width: 1px; height: 24px; background: #c9b8a8; margin: 0 3px; }
+.title-area { margin-left: auto; font-family: 'Caveat', cursive; font-size: 18px; color: #a07850; }
+
+/* Swatches */
+.swatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #c9b8a8; cursor: pointer; transition: transform 0.1s; }
+.swatch:hover { transform: scale(1.2); }
+.swatch.selected { border: 2.5px solid #7a5c45; }
+
+/* Sound toggle */
+.sound-btn {
+  background: #d4c4b0; border: 1.5px solid #c9b8a8; border-radius: 20px;
+  padding: 4px 12px; cursor: pointer; color: #7a5c45;
+  display: flex; align-items: center; gap: 5px;
+  font-family: 'Caveat', cursive; font-size: 15px;
+}
+.sound-btn:hover { background: #c4b4a0; }
+.sound-indicator { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #b09080; transition: background 0.1s; }
+.sound-indicator.on { background: #7dba8a; }
+
+/* Sound panel btn */
+.sound-config-btn {
+  background: #c4a882; border: 1.5px solid #b09070; border-radius: 8px;
+  padding: 5px 10px; cursor: pointer; color: #fff9f2;
+  font-family: 'Caveat', cursive; font-size: 15px;
+  display: flex; align-items: center; gap: 4px;
+  transition: all 0.1s;
+}
+.sound-config-btn:hover { background: #b49872; transform: translateY(-1px); }
+
+@font-face {
+  font-family: 'ComingSoon';
+  src: url('E:\\vscodeprojects\\Bloco de notas\\ComingSoon.ttf') format('truetype');
+}
+
+/* Sound Panel Overlay */
+.panel-overlay {
+  position: fixed; inset: 0; background: rgba(90,60,42,0.22);
+  z-index: 500; display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.panel-overlay.open { opacity: 1; pointer-events: all; }
+
+.sound-panel {
+  background: #fff9f2; border-radius: 20px; border: 2px solid #c9b8a8;
+  box-shadow: 6px 8px 0 #c9b8a8; padding: 28px 32px; width: 460px; max-width: 95vw;
+  transform: translateY(16px) scale(0.97); transition: transform 0.2s;
+  max-height: 90vh; overflow-y: auto;
+}
+.panel-overlay.open .sound-panel { transform: translateY(0) scale(1); }
+
+.panel-title {
+  font-family: 'Caveat', cursive; font-size: 24px; color: #8b6550;
+  margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
+}
+.panel-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #b09080; }
+.panel-close:hover { color: #7a5c45; }
+
+.section-label {
+  font-family: 'Caveat', cursive; font-size: 16px; color: #a07850;
+  margin: 14px 0 8px; display: block;
+}
+
+/* Sound preset cards */
+.preset-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 6px; }
+.preset-card {
+  background: #f0e4d4; border: 1.5px solid #d4c0ac; border-radius: 12px;
+  padding: 10px 8px; text-align: center; cursor: pointer; transition: all 0.15s;
+}
+.preset-card:hover { background: #e4d4c0; transform: translateY(-2px); box-shadow: 2px 3px 0 #c9b8a8; }
+.preset-card.active { background: #c4a882; border-color: #b09070; box-shadow: 2px 3px 0 #b09070; }
+.preset-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+.preset-name { font-family: 'Caveat', cursive; font-size: 14px; color: #7a5c45; display: block; }
+.preset-card.active .preset-name { color: #fff9f2; }
+
+/* Sliders */
+.slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.slider-label { font-family: 'Caveat', cursive; font-size: 14px; color: #8b6550; min-width: 90px; }
+.slider-val { font-family: 'Caveat', cursive; font-size: 14px; color: #a07850; min-width: 38px; text-align: right; }
+input[type=range] {
+  flex: 1; height: 4px; border-radius: 4px; -webkit-appearance: none; appearance: none;
+  background: linear-gradient(to right, #c4a882 0%, #c4a882 var(--pct,50%), #e0cebc var(--pct,50%), #e0cebc 100%);
+  outline: none; cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 16px; height: 16px;
+  border-radius: 50%; background: #c4a882; border: 2px solid #b09070; cursor: pointer;
+}
+
+/* Waveform selector */
+.wave-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.wave-btn {
+  background: #f0e4d4; border: 1.5px solid #d4c0ac; border-radius: 10px;
+  padding: 6px 14px; font-family: 'Caveat', cursive; font-size: 14px;
+  color: #7a5c45; cursor: pointer; transition: all 0.12s; display: flex; align-items: center; gap: 5px;
+}
+.wave-btn:hover { background: #e4d4c0; }
+.wave-btn.active { background: #c4a882; border-color: #b09070; color: #fff9f2; }
+
+/* Scale selector */
+.scale-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.scale-btn {
+  background: #f0e4d4; border: 1.5px solid #d4c0ac; border-radius: 8px;
+  padding: 5px 10px; font-family: 'Caveat', cursive; font-size: 13px;
+  color: #7a5c45; cursor: pointer; transition: all 0.12s;
+}
+.scale-btn:hover { background: #e4d4c0; }
+.scale-btn.active { background: #c4a882; border-color: #b09070; color: #fff9f2; }
+
+/* Test btn */
+.test-btn {
+  background: #7dba8a; border: 1.5px solid #5a9870; border-radius: 10px;
+  padding: 8px 20px; font-family: 'Caveat', cursive; font-size: 16px; color: #fff9f2;
+  cursor: pointer; transition: all 0.12s; width: 100%; margin-top: 16px;
+}
+.test-btn:hover { background: #6aaa78; transform: translateY(-1px); }
+.test-btn:active { transform: scale(0.97); }
+
+/* Canvas */
+.canvas-wrapper { flex: 1; position: relative; overflow: auto; }
+.canvas { position: relative; width: 100%; min-height: calc(100vh - 60px); }
+
+/* Main editor */
+.main-editor {
+  position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
+  width: min(680px, 90%); min-height: 700px;
+  background: #fff9f2; border-radius: 16px;
+  box-shadow: 4px 6px 0 #c9b8a8; padding: 40px 48px;
+  border: 1.5px solid #ddd0c0;
+}
+.page-title {
+  font-family: 'Caveat', cursive; font-size: 28px; color: #8b6550;
+  border: none; outline: none; background: none; width: 100%;
+  margin-bottom: 12px; border-bottom: 1.5px dashed #e0cebc; padding-bottom: 8px;
+}
+.page-content {
+  font-family: 'ComingSoon', serif; font-size: 15px; line-height: 1.9; color: #4a3425;
+  border: none; outline: none; background: none; width: 100%; min-height: 580px; resize: none;
+}
+
+/* Notes */
+.note {
+  position: absolute; min-width: 180px; min-height: 100px; border-radius: 12px;
+  padding: 10px 12px; box-shadow: 3px 4px 0 #c9b8a8; cursor: move; user-select: none;
+  transition: box-shadow 0.15s;
+}
+.note:hover { box-shadow: 4px 6px 0 #b8a090; }
+.note.dragging { box-shadow: 6px 8px 0 #b8a090; opacity: 0.95; z-index: 999; }
+.note-header { display: flex; justify-content: flex-end; margin-bottom: 4px; }
+.note-delete { background: none; border: none; cursor: pointer; font-size: 14px; opacity: 0.4; color: #5a3c2a; }
+.note-delete:hover { opacity: 0.8; }
+.note-content { width: 100%; background: none; border: none; outline: none; font-family: 'ComingSoon', serif; font-size: 14px; line-height: 1.7; resize: none; min-height: 80px; cursor: text; }
+.note-resize { position: absolute; bottom: 4px; right: 6px; font-size: 11px; opacity: 0.3; }
+
+.add-note-btn {
+  position: fixed; bottom: 60px; right: 20px; width: 46px; height: 46px;
+  border-radius: 50%; background: #c4a882; border: 2px solid #b09070;
+  box-shadow: 3px 3px 0 #b09070; font-size: 22px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.1s; color: #fff9f2;
+}
+.add-note-btn:hover { transform: scale(1.08); }
+.add-note-btn:active { transform: scale(0.95); }
+
+.counter { position: fixed; bottom: 16px; left: 16px; font-family: 'Caveat', cursive; font-size: 14px; color: #b09080; }
+.helper { position: fixed; bottom: 16px; right: 16px; font-family: 'Caveat', cursive; font-size: 13px; color: #b09080; background: #f0e4d4; border: 1px solid #d4c4b0; border-radius: 10px; padding: 5px 11px; pointer-events: none; }
+
+/* ── ARMÁRIO DE GAVETAS ──────────────────────────────────── */
+
+/* Alça do armário (sempre visível) */
+#cabinet-handle {
+  position: fixed; right: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  background: #c4a882;
+  border-radius: 12px 0 0 12px;
+  border: 1.5px solid #b09070; border-right: none;
+  box-shadow: -3px 3px 8px rgba(90,60,42,0.22);
+  cursor: pointer; z-index: 400;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 8px; padding: 14px 0;
+  transition: width 0.15s, background 0.15s;
+  user-select: none;
+}
+#cabinet-handle:hover { width: 32px; background: #b49872; }
+#cabinet-handle-icon { font-size: 16px; }
+#cabinet-handle-label {
+  font-family: 'Caveat', cursive; font-size: 13px; color: #fff9f2;
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  opacity: 0.9; letter-spacing: 0.5px;
+}
+
+/* Painel principal do armário */
+#cabinet {
+  position: fixed; right: 0; top: 0;
+  width: 280px; height: 100vh;
+  background: #e8d5c0;
+  border-left: 2px solid #c9b8a8;
+  box-shadow: -6px 0 24px rgba(90,60,42,0.18);
+  z-index: 395;
+  display: flex; flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+  pointer-events: none;
+}
+#cabinet.open {
+  transform: translateX(0);
+  pointer-events: all;
+}
+
+/* Cabeçalho do armário */
+#cabinet-header {
+  background: #d4c0ac;
+  border-bottom: 1.5px solid #c9b8a8;
+  padding: 12px 14px 10px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+#cabinet-title {
+  font-family: 'Caveat', cursive; font-size: 20px; color: #7a5c45;
+}
+#cabinet-header-btns {
+  display: flex; gap: 6px; align-items: center;
+}
+#add-drawer-btn {
+  background: #c4a882; border: 1.5px solid #b09070; border-radius: 8px;
+  width: 28px; height: 28px; cursor: pointer; color: #fff9f2;
+  font-size: 16px; display: flex; align-items: center; justify-content: center;
+  transition: transform 0.1s, background 0.1s;
+  font-family: 'Caveat', cursive;
+}
+#add-drawer-btn:hover { background: #b49872; transform: scale(1.08); }
+#cabinet-close-btn {
+  background: none; border: none; cursor: pointer;
+  color: #b09080; font-size: 18px; line-height: 1;
+  padding: 2px 4px; border-radius: 6px; transition: color 0.1s;
+}
+#cabinet-close-btn:hover { color: #7a5c45; }
+
+/* Área de scroll das gavetas */
+#drawer-rack {
+  flex: 1; overflow-y: auto; padding: 10px 10px;
+  display: flex; flex-direction: column; gap: 8px;
+  scrollbar-width: thin; scrollbar-color: #c9b8a8 transparent;
+}
+#drawer-rack::-webkit-scrollbar { width: 6px; }
+#drawer-rack::-webkit-scrollbar-thumb { background: #c9b8a8; border-radius: 4px; }
+#drawer-rack:empty::after {
+  content: 'nenhuma gaveta ainda ✦';
+  font-family: 'Caveat', cursive; font-size: 15px; color: #b09080;
+  text-align: center; padding: 30px 0; display: block;
+}
+
+/* Cada gaveta é um accordion dentro do armário */
+.drawer-unit {
+  border-radius: 10px;
+  border: 1.5px solid rgba(0,0,0,0.10);
+  overflow: hidden;
+  background: var(--dc);
+  box-shadow: 2px 3px 0 rgba(0,0,0,0.10);
+  transition: box-shadow 0.15s;
+  flex-shrink: 0;
+}
+.drawer-unit:hover { box-shadow: 3px 4px 0 rgba(0,0,0,0.14); }
+.drawer-unit.drag-over { outline: 2px dashed rgba(255,255,255,0.7); outline-offset: -3px; }
+
+/* Cabeçalho clicável da gaveta */
+.drawer-tab {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 10px; cursor: pointer;
+  user-select: none;
+  transition: background 0.12s;
+}
+.drawer-tab:hover { background: rgba(255,255,255,0.12); }
+.drawer-tab-icon { font-size: 15px; line-height: 1; flex-shrink: 0; }
+.drawer-tab-label {
+  font-family: 'Caveat', cursive; font-size: 15px; color: #fff9f2;
+  flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  opacity: 0.95;
+}
+.drawer-tab-arrow {
+  font-size: 11px; color: rgba(255,255,255,0.6);
+  transition: transform 0.22s; flex-shrink: 0;
+}
+.drawer-unit.open .drawer-tab-arrow { transform: rotate(90deg); }
+.drawer-tab-count {
+  font-family: 'Caveat', cursive; font-size: 12px;
+  background: rgba(0,0,0,0.18); color: #fff9f2;
+  border-radius: 10px; padding: 1px 7px; flex-shrink: 0;
+}
+
+/* Corpo accordion (abre/fecha) */
+.drawer-body {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.28s cubic-bezier(.4,0,.2,1);
+  background: rgba(0,0,0,0.08);
+  border-top: 1px solid rgba(0,0,0,0.08);
+}
+.drawer-unit.open .drawer-body { max-height: 600px; }
+
+.drawer-inner {
+  padding: 10px 10px 10px 10px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+.drawer-header {
+  display: flex; align-items: center; gap: 6px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed rgba(255,255,255,0.3);
+}
+.drawer-name-input {
+  flex: 1; background: rgba(255,255,255,0.15); border: none; outline: none;
+  border-radius: 6px; padding: 3px 7px;
+  font-family: 'Caveat', cursive; font-size: 15px; color: #fff9f2;
+  min-width: 0;
+}
+.drawer-name-input::placeholder { color: rgba(255,255,255,0.45); }
+.drawer-del-btn {
+  background: rgba(0,0,0,0.15); border: none; border-radius: 6px;
+  width: 22px; height: 22px; cursor: pointer; color: #fff9f2;
+  font-size: 12px; display: flex; align-items: center; justify-content: center;
+  opacity: 0.65; flex-shrink: 0; transition: opacity 0.1s;
+}
+.drawer-del-btn:hover { opacity: 1; background: rgba(0,0,0,0.3); }
+
+/* Área de notas dentro de cada gaveta */
+.drawer-notes-area {
+  display: flex; flex-direction: column; gap: 6px;
+  max-height: 300px; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.3) transparent;
+  padding-right: 2px;
+}
+.drawer-notes-area::-webkit-scrollbar { width: 4px; }
+.drawer-notes-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px; }
+.drawer-notes-area:empty::after {
+  content: 'arraste notas aqui ✦';
+  font-family: 'Caveat', cursive; font-size: 13px;
+  color: rgba(255,255,255,0.45); display: block;
+  text-align: center; padding: 14px 0;
+}
+
+/* Chip de nota guardada */
+.stored-note {
+  background: rgba(255,255,255,0.22); border-radius: 8px;
+  padding: 8px 9px; font-family: 'Caveat', cursive; font-size: 14px;
+  color: #fff9f2; line-height: 1.5; cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: background 0.12s;
+  display: flex; align-items: flex-start; gap: 6px;
+}
+.stored-note:hover { background: rgba(255,255,255,0.32); }
+.stored-note-text {
+  flex: 1; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 4; line-clamp: 4; -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+.stored-note-pop {
+  background: rgba(255,255,255,0.15); border: none; border-radius: 5px;
+  cursor: pointer; color: rgba(255,255,255,0.7); font-size: 13px;
+  padding: 2px 5px; line-height: 1; flex-shrink: 0; margin-top: 1px;
+  transition: background 0.1s, color 0.1s;
+}
+.stored-note-pop:hover { color: #fff9f2; background: rgba(255,255,255,0.28); }
+</style>
+
+<div class="app">
+  <div class="toolbar">
+    <button class="toolbar-btn" onclick="format('bold')"><b>B</b></button>
+    <button class="toolbar-btn" onclick="format('italic')"><i>I</i></button>
+    <button class="toolbar-btn" onclick="format('underline')"><u>U</u></button>
+    <div class="sep"></div>
+    <button class="toolbar-btn" onclick="format('h1')">H1</button>
+    <button class="toolbar-btn" onclick="format('h2')">H2</button>
+    <div class="sep"></div>
+    <div class="swatch selected" style="background:#fff9f2" id="sw1" onclick="setTheme('cream')" title="Creme"></div>
+    <div class="swatch" style="background:#e8f0e8" id="sw2" onclick="setTheme('sage')" title="Sage"></div>
+    <div class="swatch" style="background:#e8e0f0" id="sw3" onclick="setTheme('lavender')" title="Lavanda"></div>
+    <div class="swatch" style="background:#f0e8e0" id="sw4" onclick="setTheme('peach')" title="Pêssego"></div>
+    <div class="swatch" style="background:#e0ecf0" id="sw5" onclick="setTheme('sky')" title="Céu"></div>
+    <div class="swatch" style="background:#1e1e2e" id="sw6" onclick="setTheme('dark')" title="Dark"></div>
+    <div class="swatch" style="background:#1c1c1c" id="sw7" onclick="setTheme('midnight')" title="Midnight"></div>
+    <div class="swatch" style="background:#1a2420" id="sw8" onclick="setTheme('forest')" title="Forest"></div>
+    <div class="sep"></div>
+    <button class="sound-btn" onclick="toggleSound()" id="soundBtn">
+      ♪ <span class="sound-indicator on" id="soundDot"></span>
+    </button>
+    <button class="sound-config-btn" onclick="openPanel()">🎛 sons</button>
+    <div class="title-area">✦ cozy notes</div>
+  </div>
+
+  <div class="canvas-wrapper" id="canvas">
+    <div class="canvas" id="noteCanvas">
+      <div class="main-editor" id="mainEditor">
+        <input class="page-title" id="pageTitle" placeholder="Título da página..." value="Minha página cozy">
+        <div class="page-content" id="pageContent" contenteditable="true" spellcheck="true">Escreva suas ideias aqui... ✦</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="add-note-btn" onclick="addNote()" title="Nova nota">+</button>
+<div class="counter" id="counter">0 palavras</div>
+<div class="helper">✦ clique para escrever</div>
+
+<!-- Alça do armário -->
+<div id="cabinet-handle" onclick="toggleCabinet()" title="Abrir/fechar armário">
+  <span id="cabinet-handle-icon">🗄</span>
+  <span id="cabinet-handle-label">gavetas</span>
+</div>
+
+<!-- Armário de gavetas -->
+<div id="cabinet">
+  <div id="cabinet-header">
+    <span id="cabinet-title">🗄 armário</span>
+    <div id="cabinet-header-btns">
+      <button id="add-drawer-btn" onclick="createDrawer()" title="Nova gaveta">+</button>
+      <button id="cabinet-close-btn" onclick="toggleCabinet()" title="Fechar">✕</button>
+    </div>
+  </div>
+  <div id="drawer-rack"></div>
+</div>
+
+<!-- Sound Panel -->
+<div class="panel-overlay" id="panelOverlay" onclick="closePanelOuter(event)">
+  <div class="sound-panel">
+    <div class="panel-title">
+      🎛 configurar sons
+      <button class="panel-close" onclick="closePanel()">✕</button>
+    </div>
+
+    <span class="section-label">✦ presets</span>
+    <div class="preset-grid" id="presetGrid">
+      <div class="preset-card active" data-preset="typewriter" onclick="applyPreset('typewriter',this)">
+        <span class="preset-icon">⌨️</span>
+        <span class="preset-name">typewriter</span>
+      </div>
+      <div class="preset-card" data-preset="chiptune" onclick="applyPreset('chiptune',this)">
+        <span class="preset-icon">🕹️</span>
+        <span class="preset-name">chiptune</span>
+      </div>
+      <div class="preset-card" data-preset="piano" onclick="applyPreset('piano',this)">
+        <span class="preset-icon">🎹</span>
+        <span class="preset-name">piano</span>
+      </div>
+      <div class="preset-card" data-preset="xylophone" onclick="applyPreset('xylophone',this)">
+        <span class="preset-icon">🎵</span>
+        <span class="preset-name">xilofone</span>
+      </div>
+      <div class="preset-card" data-preset="harp" onclick="applyPreset('harp',this)">
+        <span class="preset-icon">🪄</span>
+        <span class="preset-name">harpa</span>
+      </div>
+      <div class="preset-card" data-preset="glitch" onclick="applyPreset('glitch',this)">
+        <span class="preset-icon">⚡</span>
+        <span class="preset-name">glitch</span>
+      </div>
+    </div>
+
+    <span class="section-label">✦ forma de onda</span>
+    <div class="wave-row" id="waveRow">
+      <button class="wave-btn active" data-wave="square" onclick="setWave('square',this)">▭ square</button>
+      <button class="wave-btn" data-wave="sine" onclick="setWave('sine',this)">〜 sine</button>
+      <button class="wave-btn" data-wave="triangle" onclick="setWave('triangle',this)">△ triangle</button>
+      <button class="wave-btn" data-wave="sawtooth" onclick="setWave('sawtooth',this)">⋀ sawtooth</button>
+    </div>
+
+    <span class="section-label">✦ escala musical</span>
+    <div class="scale-row" id="scaleRow">
+      <button class="scale-btn active" onclick="setScale('pentatonic',this)">pentatônica</button>
+      <button class="scale-btn" onclick="setScale('major',this)">maior</button>
+      <button class="scale-btn" onclick="setScale('minor',this)">menor</button>
+      <button class="scale-btn" onclick="setScale('blues',this)">blues</button>
+      <button class="scale-btn" onclick="setScale('chromatic',this)">cromática</button>
+    </div>
+
+    <span class="section-label">✦ afinação</span>
+    <div class="slider-row">
+      <span class="slider-label">oitava</span>
+      <input type="range" id="octaveSlider" min="1" max="5" step="1" value="4" oninput="updateSlider(this,'octaveVal');updateOctave(this.value)">
+      <span class="slider-val" id="octaveVal">4</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-label">velocidade</span>
+      <input type="range" id="durSlider" min="0.03" max="0.25" step="0.01" value="0.06" oninput="updateSlider(this,'durVal');s.dur=parseFloat(this.value)">
+      <span class="slider-val" id="durVal">0.06s</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-label">volume</span>
+      <input type="range" id="volSlider" min="0.01" max="0.25" step="0.01" value="0.07" oninput="updateSlider(this,'volVal');s.vol=parseFloat(this.value)">
+      <span class="slider-val" id="volVal">0.07</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-label">reverb</span>
+      <input type="range" id="reverbSlider" min="0" max="1" step="0.05" value="0" oninput="updateSlider(this,'reverbVal');s.reverb=parseFloat(this.value)">
+      <span class="slider-val" id="reverbVal">0</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-label">portamento</span>
+      <input type="range" id="portSlider" min="0" max="0.12" step="0.005" value="0" oninput="updateSlider(this,'portVal');s.portamento=parseFloat(this.value)">
+      <span class="slider-val" id="portVal">0</span>
+    </div>
+
+    <button class="test-btn" onclick="runDemo()">▶ testar sons</button>
+  </div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyBeUTiTpSCyziYPlXIfEVgP1dyGwpmVzEo",
+  authDomain: "cozyon-39cdb.firebaseapp.com",
+  databaseURL: "https://cozyon-39cdb-default-rtdb.firebaseio.com",
+  projectId: "cozyon-39cdb",
+  storageBucket: "cozyon-39cdb.firebasestorage.app",
+  messagingSenderId: "984175302165",
+  appId: "1:984175302165:web:834ab7acca1fb560a9201c"
+};
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.database();
+  
+const AC = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+let soundOn = true;
+let noteIdx = 0;
+let highZ = 10;
+let dragNote = null, dx = 0, dy = 0;
+
+function getCtx() {
+  if (!audioCtx) audioCtx = new AC();
+  return audioCtx;
+}
+
+const scales = {
+  pentatonic: [261.63,293.66,329.63,392.00,440.00,523.25,587.33,659.25,783.99,880.00],
+  major:      [261.63,293.66,329.63,349.23,392.00,440.00,493.88,523.25,587.33,659.25],
+  minor:      [261.63,293.66,311.13,349.23,392.00,415.30,466.16,523.25,587.33,622.25],
+  blues:      [261.63,311.13,349.23,369.99,392.00,466.16,523.25,622.25,698.46,739.99],
+  chromatic:  [261.63,277.18,293.66,311.13,329.63,349.23,369.99,392.00,415.30,440.00]
+};
+
+const s = {
+  wave: 'square',
+  scale: 'pentatonic',
+  octaveMult: 1.0,
+  dur: 0.06,
+  vol: 0.07,
+  reverb: 0,
+  portamento: 0
+};
+
+function getFreq() {
+  return scales[s.scale][noteIdx % scales[s.scale].length] * s.octaveMult;
+}
+
+function createReverb(ctx, amount) {
+  const conv = ctx.createConvolver();
+  const rate = ctx.sampleRate;
+  const len = rate * amount * 2;
+  const buf = ctx.createBuffer(2, len, rate);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 3);
+  }
+  conv.buffer = buf;
+  return conv;
+}
+
+function playNote(freq, type, dur, vol, portamento, reverb) {
+  try {
+    const ctx = getCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    let dest = gain;
+
+    if (reverb > 0.05) {
+      const wet = ctx.createGain();
+      const dry = ctx.createGain();
+      const rev = createReverb(ctx, reverb);
+      wet.gain.value = reverb * 0.6;
+      dry.gain.value = 1 - reverb * 0.4;
+      osc.connect(dry); osc.connect(rev);
+      dry.connect(gain); rev.connect(wet);
+      wet.connect(ctx.destination);
+    }
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = type;
+
+    if (portamento > 0) {
+      osc.frequency.setValueAtTime(freq * 0.92, ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(freq, ctx.currentTime + portamento);
+    } else {
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    }
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.985, ctx.currentTime + dur);
+
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + dur + reverb * 0.5);
+  } catch(e) {}
+}
+
+function playKey() {
+  const sc = scales[s.scale];
+  const freq = sc[Math.floor(Math.random() * sc.length)] * s.octaveMult;
+  playNote(freq, s.wave, s.dur, s.vol, s.portamento, s.reverb);
+}
+
+function playSpace() {
+  try {
+    const ctx = getCtx();
+    const baseFreq = scales[s.scale][0] * s.octaveMult;
+    [baseFreq, baseFreq * 1.5].forEach((f, i) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.type = s.wave === 'sawtooth' ? 'triangle' : s.wave;
+      osc.frequency.value = f;
+      g.gain.setValueAtTime(s.vol * 0.7, ctx.currentTime + i*0.05);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+      osc.start(ctx.currentTime + i*0.05);
+      osc.stop(ctx.currentTime + 0.28);
+    });
+  } catch(e) {}
+}
+
+function playEnter() {
+  try {
+    const ctx = getCtx();
+    const sc = scales[s.scale];
+    const base = s.octaveMult;
+    [sc[0]*base, sc[2]*base, sc[4]*base].forEach((f, i) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.type = s.wave;
+      osc.frequency.value = f;
+      g.gain.setValueAtTime(s.vol * 0.8, ctx.currentTime + i*0.07);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i*0.07 + 0.12);
+      osc.start(ctx.currentTime + i*0.07);
+      osc.stop(ctx.currentTime + i*0.07 + 0.16);
+    });
+  } catch(e) {}
+}
+
+function playBackspace() {
+  const freq = scales[s.scale][0] * s.octaveMult * 0.7;
+  playNote(freq, s.wave === 'sine' ? 'triangle' : 'sawtooth', 0.05, s.vol * 0.7, 0, 0);
+}
+
+document.addEventListener('keydown', (e) => {
+  if (!soundOn) return;
+  if (e.key === ' ') { playSpace(); return; }
+  if (e.key === 'Enter') { playEnter(); return; }
+  if (e.key === 'Backspace' || e.key === 'Delete') { playBackspace(); return; }
+  if (e.key.length === 1) playKey();
+});
+
+function toggleSound() {
+  soundOn = !soundOn;
+  document.getElementById('soundDot').className = 'sound-indicator' + (soundOn ? ' on' : '');
+  if (soundOn) playNote(scales[s.scale][4] * s.octaveMult, s.wave, 0.1, s.vol, 0, s.reverb);
+}
+
+// --- Presets ---
+const presets = {
+  typewriter: { wave:'square', scale:'pentatonic', octave:4, dur:0.055, vol:0.07, reverb:0, portamento:0 },
+  chiptune:   { wave:'square', scale:'major', octave:5, dur:0.06, vol:0.08, reverb:0, portamento:0 },
+  piano:      { wave:'sine', scale:'major', octave:4, dur:0.18, vol:0.10, reverb:0.3, portamento:0.01 },
+  xylophone:  { wave:'sine', scale:'pentatonic', octave:5, dur:0.09, vol:0.08, reverb:0.15, portamento:0 },
+  harp:       { wave:'triangle', scale:'pentatonic', octave:4, dur:0.22, vol:0.07, reverb:0.5, portamento:0.06 },
+  glitch:     { wave:'sawtooth', scale:'chromatic', octave:4, dur:0.04, vol:0.06, reverb:0, portamento:0 }
+};
+
+function applyPreset(name, el) {
+  const p = presets[name]; if (!p) return;
+  s.wave = p.wave; s.scale = p.scale; s.dur = p.dur; s.vol = p.vol; s.reverb = p.reverb; s.portamento = p.portamento;
+  const octMap = {1:0.25,2:0.5,3:1,4:1,5:2};
+  s.octaveMult = octMap[p.octave] || 1;
+
+  document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  setSliderUI('octaveSlider','octaveVal', p.octave, p.octave);
+  setSliderUI('durSlider','durVal', p.dur, p.dur+'s');
+  setSliderUI('volSlider','volVal', p.vol, p.vol);
+  setSliderUI('reverbSlider','reverbVal', p.reverb, p.reverb);
+  setSliderUI('portSlider','portVal', p.portamento, p.portamento);
+  document.querySelectorAll('.wave-btn').forEach(b => { b.classList.toggle('active', b.dataset.wave === p.wave); });
+  document.querySelectorAll('#scaleRow .scale-btn').forEach((b,i) => {
+    const names = ['pentatonic','major','minor','blues','chromatic'];
+    b.classList.toggle('active', names[i] === p.scale);
+  });
+  if (soundOn) setTimeout(runDemo, 80);
+}
+
+function setSliderUI(sliderId, valId, val, display) {
+  const sl = document.getElementById(sliderId);
+  if (!sl) return;
+  sl.value = val;
+  const pct = ((val - sl.min) / (sl.max - sl.min) * 100).toFixed(1) + '%';
+  sl.style.setProperty('--pct', pct);
+  document.getElementById(valId).textContent = display !== undefined ? display : val;
+}
+
+function setWave(wave, el) {
+  s.wave = wave;
+  document.querySelectorAll('.wave-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('active'));
+  if (soundOn) playKey();
+}
+
+function setScale(scale, el) {
+  s.scale = scale; noteIdx = 0;
+  document.querySelectorAll('#scaleRow .scale-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('active'));
+  if (soundOn) playKey();
+}
+
+function updateOctave(val) {
+  const map = {1:0.25,2:0.5,3:1,4:1,5:2};
+  s.octaveMult = map[val] || 1;
+}
+
+function updateSlider(el, valId) {
+  const raw = parseFloat(el.value);
+  const pct = ((raw - el.min) / (el.max - el.min) * 100).toFixed(1) + '%';
+  el.style.setProperty('--pct', pct);
+  const disp = valId === 'durVal' ? raw.toFixed(2)+'s' : valId === 'octaveVal' ? raw : raw.toFixed(2);
+  document.getElementById(valId).textContent = disp;
+}
+
+function runDemo() {
+  if (!soundOn) return;
+  const sc = scales[s.scale];
+  const melody = [0,2,4,2,4,6,4,2];
+  melody.forEach((si, i) => {
+    setTimeout(() => {
+      const freq = sc[si % sc.length] * s.octaveMult;
+      playNote(freq, s.wave, s.dur * 2.5, s.vol, s.portamento, s.reverb);
+    }, i * 130);
+  });
+}
+
+function openPanel() {
+  document.getElementById('panelOverlay').classList.add('open');
+}
+function closePanel() {
+  document.getElementById('panelOverlay').classList.remove('open');
+}
+function closePanelOuter(e) {
+  if (e.target === document.getElementById('panelOverlay')) closePanel();
+}
+
+// --- Themes ---
+const themes = {
+  cream:    { page:'#fff9f2', bg:'#f5ede0', bar:'#e8d5c0', border:'#c9b8a8', text:'#4a3425', accent:'#8b6550' },
+  sage:     { page:'#eef5ee', bg:'#dceadc', bar:'#c8dac8', border:'#a8c4a8', text:'#2a4230', accent:'#4a7055' },
+  lavender: { page:'#f3eeff', bg:'#e8ddf7', bar:'#d4c8ee', border:'#b8a8d8', text:'#362a50', accent:'#6050a0' },
+  peach:    { page:'#fff3ed', bg:'#fce8db', bar:'#edd4c4', border:'#d4b4a4', text:'#50302a', accent:'#985040' },
+  sky:      { page:'#edf6f9', bg:'#d8ecf2', bar:'#b8d8e4', border:'#98c4d4', text:'#1a3040', accent:'#306080' },
+  dark:     { page:'#1e1e2e', bg:'#13131f', bar:'#1a1a2e', border:'#3a3a5c', text:'#cdd6f4', accent:'#cba6f7' },
+  midnight: { page:'#1c1c1c', bg:'#111111', bar:'#1a1a1a', border:'#333333', text:'#e0e0e0', accent:'#888888' },
+  forest:   { page:'#1a2420', bg:'#111a17', bar:'#182018', border:'#2a4030', text:'#c8dcc8', accent:'#7dba8a' },
+
+};
+function setTheme(name) {
+  const t = themes[name]; if (!t) return;
+  document.body.style.background = t.bg;
+  const tb = document.querySelector('.toolbar');
+  tb.style.background = t.bar; tb.style.borderBottomColor = t.border;
+  const me = document.querySelector('.main-editor');
+  me.style.background = t.page; me.style.borderColor = t.border; me.style.boxShadow = `4px 6px 0 ${t.border}`;
+  document.querySelector('.page-title').style.color = t.accent;
+  document.querySelector('.page-title').style.borderBottomColor = t.border;
+  document.querySelector('.page-content').style.color = t.text;
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+  const idx = ['cream','sage','lavender','peach','sky'].indexOf(name)+1;
+  const sw = document.getElementById('sw'+idx); if (sw) sw.classList.add('selected');
+  if (soundOn) playNote(scales[s.scale][4]*s.octaveMult, s.wave, 0.12, s.vol, s.portamento, s.reverb);
+}
+
+// --- Format ---
+function format(type) {
+  const editor = document.getElementById('pageContent');
+  editor.focus();
+  if (type==='bold') document.execCommand('bold');
+  else if (type==='italic') document.execCommand('italic');
+  else if (type==='underline') document.execCommand('underline');
+  else if (type==='h1') document.execCommand('formatBlock',false,'h2');
+  else if (type==='h2') document.execCommand('formatBlock',false,'h3');
+  if (soundOn) playNote(scales[s.scale][2]*s.octaveMult, 'triangle', 0.08, s.vol, 0, 0);
+}
+
+// --- Persistence (Firebase) ---
+function saveData() {
+  const notes = [];
+  document.querySelectorAll('.note').forEach(note => {
+    const ta = note.querySelector('textarea');
+    if (!ta) return;
+    notes.push({ text: ta.value, left: note.style.left, top: note.style.top, zIndex: note.style.zIndex });
+  });
+  const data = {
+    title: document.getElementById('pageTitle').value,
+    content: document.getElementById('pageContent').innerHTML,
+    notes
+  };
+  db.ref('cozy_notes/dados').set(data);
+}
+
+function loadData() {
+  db.ref('cozy_notes/dados').once('value').then((snapshot) => {
+    const data = snapshot.val();
+    if (!data) {
+      addNote(760, 80, '🎛 clique em "sons" para customizar!');
+      addNote(770, 220, 'arraste-me ✦');
+      return;
+    }
+    if (data.title !== undefined) document.getElementById('pageTitle').value = data.title;
+    if (data.content !== undefined) document.getElementById('pageContent').innerHTML = data.content;
+    
+    document.querySelectorAll('.note').forEach(n => n.remove());
+    if (Array.isArray(data.notes)) {
+      data.notes.forEach(n => addNote(parseFloat(n.left)||120, parseFloat(n.top)||80, n.text||''));
+    }
+    updateWordCount();
+  });
+}
+loadData();
+
+
+
+// --- Word count ---
+function updateWordCount() {
+  const text = document.getElementById('pageContent').innerText||'';
+  const words = text.trim().split(/\s+/).filter(w=>w.length>0).length;
+  document.getElementById('counter').textContent = words+' palavra'+(words!==1?'s':'');
+}
+document.getElementById('pageContent').addEventListener('input', () => { updateWordCount(); saveData(); });
+document.getElementById('pageTitle').addEventListener('input', saveData);
+
+// --- Notes ---
+const noteColors = ['#fdf6d3','#d3f0e8','#f7dde8','#dde8f7','#f7e8dd'];
+const noteTxtColors = ['#5a4820','#204838','#501830','#182848','#503020'];
+let noteCount = 0;
+
+function addNote(x, y, text) {
+  noteCount++;
+  const ci = (noteCount-1) % noteColors.length;
+  const note = document.createElement('div');
+  note.className = 'note';
+  note.style.background = noteColors[ci];
+  note.style.border = '1.5px solid #c9b8a8';
+  note.style.left = (x||120+Math.random()*280)+'px';
+  note.style.top = (y||80+Math.random()*200)+'px';
+  note.style.zIndex = ++highZ;
+  note.innerHTML = `<div class="note-header"><button class="note-delete" onclick="this.closest('.note').remove();saveData()">✕</button></div>
+    <textarea class="note-content" placeholder="nota rápida..." style="color:${noteTxtColors[ci]}">${text||''}</textarea>
+    <div class="note-resize">⬘</div>`;
+  const ta = note.querySelector('textarea');
+  note.querySelector('.note-header').addEventListener('mousedown', startDrag);
+  note.addEventListener('mousedown', ()=>{ note.style.zIndex = ++highZ; });
+  ta.addEventListener('keydown', (e)=>{
+    if (!soundOn) return;
+    if (e.key===' ') { playSpace(); return; }
+    if (e.key==='Enter') { playEnter(); return; }
+    if (e.key==='Backspace') { playBackspace(); return; }
+    if (e.key.length===1) playKey();
+  });
+  ta.addEventListener('input', ()=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; saveData(); });
+  function startDrag(e) {
+    if (e.target===ta) return;
+    dragNote=note;
+    noteDragTarget=note;
+    const r=note.getBoundingClientRect(); dx=e.clientX-r.left; dy=e.clientY-r.top;
+    note.classList.add('dragging'); e.preventDefault();
+  }
+  document.getElementById('noteCanvas').appendChild(note);
+  if (soundOn) setTimeout(()=>playNote(scales[s.scale][4]*s.octaveMult,'triangle',0.1,s.vol,0,s.reverb),50);
+}
+
+document.addEventListener('mousemove', (e)=>{
+  if (!dragNote) return;
+  const cv = document.getElementById('noteCanvas').getBoundingClientRect();
+  const wr = document.getElementById('canvas');
+  dragNote.style.left = (e.clientX-cv.left-dx+wr.scrollLeft)+'px';
+  dragNote.style.top = (e.clientY-cv.top-dy+wr.scrollTop)+'px';
+
+  // Abrir o armário automaticamente ao arrastar nota para a borda direita
+  const threshold = cabinetOpen ? 280 : 60;
+  if (e.clientX > window.innerWidth - threshold && !cabinetOpen) {
+    toggleCabinet();
+  }
+
+  // highlight drawer under cursor
+  document.querySelectorAll('.drawer-unit').forEach(unit => {
+    const r = unit.getBoundingClientRect();
+    const over = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    unit.classList.toggle('drag-over', over);
+  });
+});
+
+document.addEventListener('mouseup', (e)=>{
+  if (!dragNote) return;
+
+  // check if dropped on a drawer
+  let droppedInDrawer = false;
+  document.querySelectorAll('.drawer-unit').forEach(unit => {
+    const r = unit.getBoundingClientRect();
+    if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+      const drawerId = parseInt(unit.id.replace('drawer-',''));
+      const d = drawers.find(x => x.id === drawerId);
+      if (d) {
+        const text = dragNote.querySelector('textarea')?.value || '';
+        dragNote.remove();
+        const notesArea = document.getElementById('drawer-notes-' + drawerId);
+        addNoteToDrawer(d, notesArea, text);
+        // auto-open the drawer
+        if (!d.open) toggleDrawer(drawerId);
+        saveDrawers(); saveData();
+        droppedInDrawer = true;
+      }
+    }
+    unit.classList.remove('drag-over');
+  });
+
+  if (!droppedInDrawer) {
+    dragNote.classList.remove('dragging');
+    saveData();
+  }
+  dragNote = null;
+  noteDragTarget = null;
+});
+
+// Init sliders visual
+['octaveSlider','durSlider','volSlider','reverbSlider','portSlider'].forEach(id=>{
+  const el=document.getElementById(id); if(!el)return;
+  const pct=((parseFloat(el.value)-parseFloat(el.min))/(parseFloat(el.max)-parseFloat(el.min))*100).toFixed(1)+'%';
+  el.style.setProperty('--pct',pct);
+});
+
+const hadSavedData = loadData();
+if (!hadSavedData) {
+  addNote(760, 80, '🎛 clique em "sons" para customizar!');
+  addNote(770, 220, 'arraste-me ✦');
+}
+updateWordCount();
+
+// ── SISTEMA DE ARMÁRIO COM GAVETAS ───────────────────────────
+
+const DRAWER_KEY = 'cozy_drawers_v2';
+const DRAWER_COLORS = [
+  '#b07a5a','#7a8fb0','#8fb07a','#a07ab0','#b0937a',
+  '#7aaab0','#b07a8a','#8a9e7a','#9a7ab0','#b09a5a'
+];
+
+let drawers = [];
+let drawerIdSeq = 0;
+let noteDragTarget = null;
+let cabinetOpen = false;
+
+function drawerColorFor(idx) {
+  return DRAWER_COLORS[idx % DRAWER_COLORS.length];
+}
+
+function toggleCabinet() {
+  cabinetOpen = !cabinetOpen;
+  document.getElementById('cabinet').classList.toggle('open', cabinetOpen);
+  document.getElementById('cabinet-handle').style.right = cabinetOpen ? '280px' : '0';
+}
+
+function createDrawer(name, color, notes, open) {
+  const id = ++drawerIdSeq;
+  const idx = drawers.length;
+  const d = {
+    id,
+    name: name || 'gaveta ' + id,
+    color: color || drawerColorFor(idx),
+    notes: notes || [],
+    open: open || false
+  };
+  drawers.push(d);
+  renderDrawer(d);
+  // Abrir o armário ao criar a primeira gaveta
+  if (!cabinetOpen) toggleCabinet();
+  saveDrawers();
+  return d;
+}
+
+function updateDrawerCount(d) {
+  const unit = document.getElementById('drawer-' + d.id);
+  if (!unit) return;
+  const countEl = unit.querySelector('.drawer-tab-count');
+  if (countEl) countEl.textContent = d.notes.length;
+}
+
+function renderDrawer(d) {
+  const rack = document.getElementById('drawer-rack');
+
+  const unit = document.createElement('div');
+  unit.className = 'drawer-unit' + (d.open ? ' open' : '');
+  unit.id = 'drawer-' + d.id;
+  unit.style.setProperty('--dc', d.color);
+
+  // ── Tab (cabeçalho clicável do accordion) ──
+  const tab = document.createElement('div');
+  tab.className = 'drawer-tab';
+  tab.innerHTML = `
+    <span class="drawer-tab-icon">🗂</span>
+    <span class="drawer-tab-label">${d.name}</span>
+    <span class="drawer-tab-count">${d.notes.length}</span>
+    <span class="drawer-tab-arrow">▶</span>
+  `;
+  tab.addEventListener('click', () => toggleDrawer(d.id));
+
+  // ── Corpo accordion ──
+  const body = document.createElement('div');
+  body.className = 'drawer-body';
+
+  const inner = document.createElement('div');
+  inner.className = 'drawer-inner';
+
+  // Cabeçalho interno: editar nome + deletar
+  const header = document.createElement('div');
+  header.className = 'drawer-header';
+
+  const nameInput = document.createElement('input');
+  nameInput.className = 'drawer-name-input';
+  nameInput.value = d.name;
+  nameInput.placeholder = 'nome...';
+  nameInput.addEventListener('input', () => {
+    d.name = nameInput.value || 'gaveta';
+    tab.querySelector('.drawer-tab-label').textContent = d.name;
+    saveDrawers();
+  });
+  nameInput.addEventListener('mousedown', e => e.stopPropagation());
+  nameInput.addEventListener('click', e => e.stopPropagation());
+
+  const delBtn = document.createElement('button');
+  delBtn.className = 'drawer-del-btn';
+  delBtn.textContent = '✕';
+  delBtn.title = 'deletar gaveta';
+  delBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (d.notes.length > 0) {
+      d.notes.forEach(n => spawnNoteFromDrawer(n.text));
+    }
+    drawers = drawers.filter(x => x.id !== d.id);
+    unit.remove();
+    saveDrawers();
+  });
+
+  header.append(nameInput, delBtn);
+
+  // Área de notas com scroll
+  const notesArea = document.createElement('div');
+  notesArea.className = 'drawer-notes-area';
+  notesArea.id = 'drawer-notes-' + d.id;
+
+  d.notes.forEach(n => addChipToDrawer(notesArea, d, n.text));
+
+  inner.append(header, notesArea);
+  body.appendChild(inner);
+  unit.append(tab, body);
+  rack.appendChild(unit);
+
+  // ── Drop zone: aceita notas arrastadas ──
+  unit.addEventListener('dragover', (e) => {
+    if (!noteDragTarget) return;
+    e.preventDefault();
+    unit.classList.add('drag-over');
+    if (!d.open) toggleDrawer(d.id);
+  });
+  unit.addEventListener('dragleave', (e) => {
+    if (!unit.contains(e.relatedTarget)) unit.classList.remove('drag-over');
+  });
+  unit.addEventListener('drop', (e) => {
+    e.preventDefault();
+    unit.classList.remove('drag-over');
+    if (!noteDragTarget) return;
+    const text = noteDragTarget.querySelector('textarea')?.value || '';
+    noteDragTarget.remove();
+    addNoteToDrawer(d, notesArea, text);
+    noteDragTarget = null;
+    saveDrawers();
+    saveData();
+  });
+}
+
+function toggleDrawer(id) {
+  const d = drawers.find(x => x.id === id);
+  if (!d) return;
+  d.open = !d.open;
+  const unit = document.getElementById('drawer-' + id);
+  unit.classList.toggle('open', d.open);
+  saveDrawers();
+}
+
+function addNoteToDrawer(d, notesArea, text) {
+  d.notes.push({ text });
+  addChipToDrawer(notesArea, d, text);
+  updateDrawerCount(d);
+}
+
+function addChipToDrawer(notesArea, d, text) {
+  const chip = document.createElement('div');
+  chip.className = 'stored-note';
+
+  const preview = document.createElement('span');
+  preview.className = 'stored-note-text';
+  preview.textContent = text || '(nota vazia)';
+
+  const popBtn = document.createElement('button');
+  popBtn.className = 'stored-note-pop';
+  popBtn.title = 'soltar no canvas';
+  popBtn.textContent = '↗';
+  popBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    spawnNoteFromDrawer(text);
+    d.notes = d.notes.filter(n => n.text !== text);
+    chip.remove();
+    updateDrawerCount(d);
+    saveDrawers();
+    saveData();
+  });
+
+  chip.append(preview, popBtn);
+  notesArea.appendChild(chip);
+}
+
+function spawnNoteFromDrawer(text) {
+  const x = 200 + Math.random() * 400;
+  const y = 100 + Math.random() * 300;
+  addNote(x, y, text);
+}
+
+// ── Persistência ──────────────────────────────────────────────
+// ── Persistência (Firebase Gavetas) ──────────────────────
+function saveDrawers() {
+  const dataToSave = drawers.map(d => ({ id: d.id, name: d.name, color: d.color, notes: d.notes, open: d.open }));
+  db.ref('cozy_notes/gavetas').set(dataToSave);
+}
+
+function loadDrawers() {
+  db.ref('cozy_notes/gavetas').once('value').then((snapshot) => {
+    const saved = snapshot.val();
+    if (!saved) {
+      createDrawer('ideias', DRAWER_COLORS[0]);
+      createDrawer('referências', DRAWER_COLORS[1]);
+      setTimeout(() => { if (cabinetOpen) toggleCabinet(); }, 0);
+      return;
+    }
+    document.getElementById('drawer-rack').innerHTML = '';
+    drawers = [];
+    saved.forEach(d => {
+      drawerIdSeq = Math.max(drawerIdSeq, d.id);
+      const obj = { id: d.id, name: d.name, color: d.color, notes: d.notes || [], open: d.open || false };
+      drawers.push(obj);
+      renderDrawer(obj);
+    });
+  });
+}
+loadDrawers();
+
+
+</script>
