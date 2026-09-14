@@ -417,6 +417,14 @@ input[type=range]::-webkit-slider-thumb {
   transition: background 0.1s, color 0.1s;
 }
 .stored-note-pop:hover { color: #fff9f2; background: rgba(255,255,255,0.28); }
+  /* Nota do tipo tarefa */
+.note.is-task .note-content { text-decoration: line-through; opacity: 0.55; }
+.note-task-btn {
+  background: none; border: none; cursor: pointer; font-size: 13px;
+  opacity: 0.4; color: #5a3c2a; transition: opacity 0.15s;
+}
+.note-task-btn:hover { opacity: 0.9; }
+.note-task-btn.done { opacity: 1; color: #7dba8a; }
 </style>
 
 <div class="app">
@@ -869,7 +877,7 @@ function saveData() {
   document.querySelectorAll('.note').forEach(note => {
     const ta = note.querySelector('textarea');
     if (!ta) return;
-    notes.push({ text: ta.value, left: note.style.left, top: note.style.top, zIndex: note.style.zIndex });
+    notes.push({ text: ta.value, left: note.style.left, top: note.style.top, zIndex: note.style.zIndex, done: note.classList.contains('is-task') });
   });
   const data = {
     title: document.getElementById('pageTitle').value,
@@ -892,7 +900,7 @@ function loadData() {
     
     document.querySelectorAll('.note').forEach(n => n.remove());
     if (Array.isArray(data.notes)) {
-      data.notes.forEach(n => addNote(parseFloat(n.left)||120, parseFloat(n.top)||80, n.text||''));
+     data.notes.forEach(n => addNote(parseFloat(n.left)||120, parseFloat(n.top)||80, n.text||'', n.done||false));
     }
     updateWordCount();
   });
@@ -915,7 +923,7 @@ const noteColors = ['#fdf6d3','#d3f0e8','#f7dde8','#dde8f7','#f7e8dd'];
 const noteTxtColors = ['#5a4820','#204838','#501830','#182848','#503020'];
 let noteCount = 0;
 
-function addNote(x, y, text) {
+function addNote(x, y, text, done) {
   noteCount++;
   const ci = (noteCount-1) % noteColors.length;
   const note = document.createElement('div');
@@ -925,9 +933,20 @@ function addNote(x, y, text) {
   note.style.left = (x||120+Math.random()*280)+'px';
   note.style.top = (y||80+Math.random()*200)+'px';
   note.style.zIndex = ++highZ;
-  note.innerHTML = `<div class="note-header"><button class="note-delete" onclick="this.closest('.note').remove();saveData()">✕</button></div>
-    <textarea class="note-content" placeholder="nota rápida..." style="color:${noteTxtColors[ci]}">${text||''}</textarea>
-    <div class="note-resize">⬘</div>`;
+ note.innerHTML = `<div class="note-header">
+    <button class="note-task-btn" title="marcar como concluída">✔</button>
+    <button class="note-delete" onclick="this.closest('.note').remove();saveData()">✕</button>
+  </div>
+  <textarea class="note-content" placeholder="nota rápida..." style="color:${noteTxtColors[ci]}">${text||''}</textarea>
+  <div class="note-resize">⬘</div>`;
+  const taskBtn = note.querySelector('.note-task-btn');
+if (done) { note.classList.add('is-task'); taskBtn.classList.add('done'); }
+taskBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const isDone = note.classList.toggle('is-task');
+  taskBtn.classList.toggle('done', isDone);
+  saveData();
+});
   const ta = note.querySelector('textarea');
   note.querySelector('.note-header').addEventListener('mousedown', startDrag);
   note.addEventListener('mousedown', ()=>{ note.style.zIndex = ++highZ; });
