@@ -265,7 +265,7 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 /* Cabeçalho do armário */
-#cabinet-header {
+ {
   background: #d4c0ac;
   border-bottom: 1.5px solid #c9b8a8;
   padding: 12px 14px 10px;
@@ -275,7 +275,7 @@ input[type=range]::-webkit-slider-thumb {
 #cabinet-title {
   font-family: 'Caveat', cursive; font-size: 20px; color: #7a5c45;
 }
-#cabinet-header-btns {
+-btns {
   display: flex; gap: 6px; align-items: center;
 }
 #add-drawer-btn {
@@ -292,6 +292,27 @@ input[type=range]::-webkit-slider-thumb {
   padding: 2px 4px; border-radius: 6px; transition: color 0.1s;
 }
 #cabinet-close-btn:hover { color: #7a5c45; }
+  /* Barra de pesquisa do armário */
+#cabinet-search-wrap {
+  padding: 8px 10px;
+  background: #d4c0ac;
+  border-bottom: 1.5px solid #c9b8a8;
+  flex-shrink: 0;
+}
+#cabinet-search {
+  width: 100%; background: #fff9f2; border: 1.5px solid #c9b8a8;
+  border-radius: 8px; padding: 5px 10px 5px 28px;
+  font-family: 'Caveat', cursive; font-size: 14px; color: #5a3c2a;
+  outline: none; box-sizing: border-box;
+}
+#cabinet-search::placeholder { color: #b09080; }
+#cabinet-search-wrap { position: relative; padding: 8px 10px; background: #d4c0ac; border-bottom: 1.5px solid #c9b8a8; flex-shrink: 0; }
+#cabinet-search-icon {
+  position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
+  font-size: 13px; pointer-events: none; opacity: 0.5;
+}
+.drawer-notes-area .stored-note.hidden { display: none; }
+.drawer-unit.search-empty { opacity: 0.35; }
 
 /* Área de scroll das gavetas */
 #drawer-rack {
@@ -489,6 +510,10 @@ input[type=range]::-webkit-slider-thumb {
       <button id="cabinet-close-btn" onclick="toggleCabinet()" title="Fechar">✕</button>
     </div>
   </div>
+  <div id="cabinet-search-wrap">
+  <span id="cabinet-search-icon">🔍</span>
+  <input id="cabinet-search" type="text" placeholder="buscar nas gavetas..." oninput="filterDrawers(this.value)">
+</div>
   <div id="drawer-rack"></div>
 </div>
 
@@ -1347,7 +1372,24 @@ document.addEventListener('click', (e) => {
   const wrap = document.getElementById('editorFabWrap');
   if (wrap && !wrap.contains(e.target)) closeFabMenu();
 });
-
+function filterDrawers(query) {
+  const q = query.trim().toLowerCase();
+  drawers.forEach(d => {
+    const unit = document.getElementById('drawer-' + d.id);
+    const notesArea = document.getElementById('drawer-notes-' + d.id);
+    if (!unit || !notesArea) return;
+    let anyVisible = false;
+    notesArea.querySelectorAll('.stored-note').forEach((chip, i) => {
+      const text = (d.notes[i]?.text || '').toLowerCase();
+      const match = !q || text.includes(q);
+      chip.classList.toggle('hidden', !match);
+      if (match) anyVisible = true;
+    });
+    unit.classList.toggle('search-empty', !!q && !anyVisible);
+    // auto-abre gavetas com resultado
+    if (q && anyVisible && !d.open) toggleDrawer(d.id);
+  });
+}
 loadDrawers();
 
 
