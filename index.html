@@ -444,21 +444,23 @@ input[type=range]::-webkit-slider-thumb {
     <div class="title-area">✦ cozy notes</div>
   </div>
 
-  <div class="canvas-wrapper" id="canvas">
+ <div class="canvas-wrapper" id="canvas">
     <div class="canvas" id="noteCanvas">
       <div class="main-editor" id="mainEditor">
-        <input class="page-title" id="pageTitle" placeholder="Título da página..." value="Minha página cozy">
+        
+        <!-- Título e botão agrupados na div flex -->
         <div style="display:flex; align-items:center; gap:10px;">
-  <input class="page-title" id="pageTitle" ...>
-  <button class="editor-fab" id="editorFab" title="Enviar para nota ou gaveta">+</button>
-</div>
+          <input class="page-title" id="pageTitle" placeholder="Título da página..." value="Minha página cozy">
+          <button class="editor-fab" id="editorFab" title="Enviar para nota ou gaveta">+</button>
+        </div>
+
         <div class="page-content" id="pageContent" contenteditable="true" spellcheck="true">Escreva suas ideias aqui... ✦</div>
 
-        <!-- Botão de ação flutuante do editor -->
+        <!-- Menu solto no final do main-editor (o editor-fab-wrap foi removido) -->
+        <div class="editor-fab-menu" id="editorFabMenu"></div>
       </div>
     </div>
   </div>
-</div>
 
 <button class="add-note-btn" onclick="addNote()" title="Nova nota">+</button>
 <div class="counter" id="counter">0 palavras</div>
