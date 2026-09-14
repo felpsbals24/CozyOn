@@ -378,8 +378,147 @@ input[type=range]::-webkit-slider-thumb {
   padding: 2px 5px; line-height: 1; flex-shrink: 0; margin-top: 1px;
   transition: background 0.1s, color 0.1s;
 }
-.stored-note-pop:hover { color: #fff9f2; background: rgba(255,255,255,0.28); }
-</style>
+/* ── BOTÃO DE AÇÃO DO EDITOR ───────────────────────── */
+.editor-actions {
+  display: flex; gap: 8px; align-items: center;
+  padding-top: 14px; margin-top: 14px;
+  border-top: 1px dashed #e0cebc;
+  flex-wrap: wrap;
+}
+.editor-action-btn {
+  background: #f0e4d4; border: 1.5px solid #d4c0ac;
+  border-radius: 10px; padding: 6px 13px;
+  font-family: 'Caveat', cursive; font-size: 14px; color: #7a5c45;
+  cursor: pointer; transition: all 0.12s; display: flex; align-items: center; gap: 5px;
+}
+.editor-action-btn:hover { background: #e4d4c0; transform: translateY(-1px); }
+.editor-action-btn:active { transform: scale(0.96); }
+.editor-action-btn.accent { background: #c4a882; border-color: #b09070; color: #fff9f2; }
+.editor-action-btn.accent:hover { background: #b49872; }
+
+/* dropdown para escolher gaveta */
+.drawer-pick-dropdown {
+  position: absolute; background: #fff9f2; border: 1.5px solid #c9b8a8;
+  border-radius: 10px; box-shadow: 3px 4px 0 #c9b8a8;
+  padding: 6px 0; z-index: 600; min-width: 180px;
+  display: none; flex-direction: column;
+}
+.drawer-pick-dropdown.open { display: flex; }
+.drawer-pick-item {
+  padding: 7px 14px; font-family: 'Caveat', cursive; font-size: 14px;
+  color: #5a3c2a; cursor: pointer; display: flex; align-items: center; gap: 8px;
+  transition: background 0.1s;
+}
+.drawer-pick-item:hover { background: #f0e4d4; }
+.drawer-pick-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.editor-action-wrap { position: relative; }
+
+/* ── BUSCA NO ARMÁRIO ──────────────────────────────── */
+#cabinet-search-wrap {
+  padding: 8px 10px 4px;
+  flex-shrink: 0;
+}
+#cabinet-search {
+  width: 100%; background: #fff9f2; border: 1.5px solid #c9b8a8;
+  border-radius: 8px; padding: 6px 10px 6px 30px;
+  font-family: 'Caveat', cursive; font-size: 14px; color: #5a3c2a;
+  outline: none; transition: border-color 0.15s;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23b09080' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: 8px center;
+}
+#cabinet-search:focus { border-color: #c4a882; }
+#cabinet-search::placeholder { color: #b09080; }
+
+/* highlight busca */
+.stored-note.hidden { display: none; }
+.stored-note mark { background: rgba(196,168,130,0.4); border-radius: 3px; color: inherit; }
+
+/* ── TAGS NAS NOTAS FLUTUANTES ─────────────────────── */
+.note-tag-row {
+  display: flex; align-items: center; gap: 5px;
+  margin-top: 4px; flex-wrap: wrap;
+}
+.note-tag-badge {
+  font-family: 'Caveat', cursive; font-size: 12px;
+  border-radius: 10px; padding: 1px 8px;
+  border: 1px solid rgba(0,0,0,0.12);
+  cursor: pointer; transition: opacity 0.12s; opacity: 0.85;
+  display: flex; align-items: center; gap: 4px;
+  color: #fff9f2;
+}
+.note-tag-badge:hover { opacity: 1; }
+.note-tag-select {
+  background: rgba(255,255,255,0.7); border: 1px solid #d4c0ac;
+  border-radius: 8px; font-family: 'Caveat', cursive; font-size: 12px;
+  color: #7a5c45; outline: none; cursor: pointer; padding: 1px 4px;
+  max-width: 110px;
+}
+
+/* botão ejetar todas as notas com aquela tag do armário */
+.drawer-eject-btn {
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 6px; padding: 2px 8px;
+  font-family: 'Caveat', cursive; font-size: 12px; color: rgba(255,255,255,0.8);
+  cursor: pointer; transition: background 0.1s; white-space: nowrap;
+}
+.drawer-eject-btn:hover { background: rgba(255,255,255,0.28); color: #fff9f2; }
+
+/* ── MOBILE RESPONSIVO ─────────────────────────────── */
+@media (max-width: 640px) {
+  .toolbar { padding: 6px 8px; gap: 4px; }
+  .toolbar-btn { padding: 4px 8px; font-size: 12px; }
+  .sound-config-btn { padding: 4px 8px; font-size: 13px; }
+  .title-area { display: none; }
+
+  .main-editor {
+    position: relative !important; transform: none !important;
+    left: 0 !important; top: 0 !important;
+    width: 100% !important; border-radius: 0 !important;
+    padding: 20px 16px !important; box-shadow: none !important;
+    border-left: none !important; border-right: none !important;
+    min-height: calc(100vh - 50px) !important;
+  }
+
+  .note {
+    min-width: 140px !important;
+    font-size: 13px;
+  }
+  .note-content { font-size: 13px !important; }
+
+  .add-note-btn { bottom: 80px; right: 12px; width: 40px; height: 40px; font-size: 20px; }
+  .counter { font-size: 12px; bottom: 10px; }
+  .helper { display: none; }
+
+  /* Armário vira bottom sheet no mobile */
+  #cabinet {
+    width: 100% !important; height: 60vh !important;
+    top: auto !important; bottom: 0 !important; right: 0 !important;
+    border-left: none !important; border-top: 2px solid #c9b8a8 !important;
+    border-radius: 16px 16px 0 0 !important;
+    transform: translateY(100%) !important;
+  }
+  #cabinet.open { transform: translateY(0) !important; }
+
+  #cabinet-handle {
+    bottom: 0; top: auto !important; right: 12px !important;
+    width: 56px !important; height: 28px !important;
+    transform: none !important;
+    border-radius: 10px 10px 0 0 !important;
+    flex-direction: row !important; gap: 4px !important;
+    padding: 0 10px !important;
+    border-bottom: none !important; border-right: 1.5px solid #b09070 !important;
+  }
+  #cabinet-handle-label { writing-mode: horizontal-tb !important; transform: none !important; font-size: 12px; }
+  #cabinet-handle:hover { width: 56px !important; }
+
+  .sound-panel { padding: 18px 16px !important; }
+  .preset-grid { grid-template-columns: repeat(2,1fr) !important; }
+}
+
+@media (max-width: 400px) {
+  .swatch { width: 16px; height: 16px; }
+  .toolbar-btn { padding: 3px 6px; font-size: 11px; }
+}
 
 <div class="app">
   <div class="toolbar">
@@ -411,6 +550,14 @@ input[type=range]::-webkit-slider-thumb {
       <div class="main-editor" id="mainEditor">
         <input class="page-title" id="pageTitle" placeholder="Título da página..." value="Minha página cozy">
         <div class="page-content" id="pageContent" contenteditable="true" spellcheck="true">Escreva suas ideias aqui... ✦</div>
+        <div class="editor-actions">
+          <button class="editor-action-btn" onclick="selectionToNote()" title="Transforma o texto selecionado (ou tudo) em nota flutuante">📌 virar nota</button>
+          <div class="editor-action-wrap">
+            <button class="editor-action-btn accent" onclick="toggleDrawerPick()" title="Enviar seleção direto para uma gaveta">🗂 → gaveta ▾</button>
+            <div class="drawer-pick-dropdown" id="drawerPickMenu"></div>
+          </div>
+          <button class="editor-action-btn" onclick="saveTXT()" title="Baixar como arquivo .txt">💾 salvar TXT</button>
+        </div>
       </div>
     </div>
   </div>
@@ -434,6 +581,9 @@ input[type=range]::-webkit-slider-thumb {
       <button id="add-drawer-btn" onclick="createDrawer()" title="Nova gaveta">+</button>
       <button id="cabinet-close-btn" onclick="toggleCabinet()" title="Fechar">✕</button>
     </div>
+  </div>
+  <div id="cabinet-search-wrap">
+    <input id="cabinet-search" placeholder="buscar nas gavetas..." oninput="filterDrawers(this.value)">
   </div>
   <div id="drawer-rack"></div>
 </div>
@@ -881,6 +1031,7 @@ function addNote(x, y, text) {
   note.style.zIndex = ++highZ;
   note.innerHTML = `<div class="note-header"><button class="note-delete" onclick="this.closest('.note').remove();saveData()">✕</button></div>
     <textarea class="note-content" placeholder="nota rápida..." style="color:${noteTxtColors[ci]}">${text||''}</textarea>
+    <div class="note-tag-row"></div>
     <div class="note-resize">⬘</div>`;
   const ta = note.querySelector('textarea');
   note.querySelector('.note-header').addEventListener('mousedown', startDrag);
@@ -901,6 +1052,8 @@ function addNote(x, y, text) {
     note.classList.add('dragging'); e.preventDefault();
   }
   document.getElementById('noteCanvas').appendChild(note);
+  // inicializa tag row após append (precisa de drawers populados)
+  setTimeout(() => addTagToNote(note, null), 0);
   if (soundOn) setTimeout(()=>playNote(scales[s.scale][4]*s.octaveMult,'triangle',0.1,s.vol,0,s.reverb),50);
 }
 
@@ -1076,6 +1229,7 @@ function renderDrawer(d) {
   });
 
   header.append(nameInput, delBtn);
+  addEjectAllBtn(header, d, notesArea);
 
   // Área de notas com scroll
   const notesArea = document.createElement('div');
@@ -1185,6 +1339,213 @@ function loadDrawers() {
     });
   });
 }
+// ── 1. BOTÃO "VIRAR NOTA" E "→ GAVETA" ──────────────────────
+
+function getEditorSelection() {
+  const editor = document.getElementById('pageContent');
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0 && sel.toString().trim().length > 0) {
+    const range = sel.getRangeAt(0);
+    // verifica se a seleção está dentro do editor
+    if (editor.contains(range.commonAncestorContainer)) {
+      const text = sel.toString().trim();
+      // remove o trecho selecionado
+      range.deleteContents();
+      saveData();
+      return text;
+    }
+  }
+  // sem seleção: usa tudo do editor
+  return editor.innerText.trim();
+}
+
+function selectionToNote() {
+  const text = getEditorSelection();
+  if (!text) return;
+  const rect = document.getElementById('mainEditor').getBoundingClientRect();
+  const canvas = document.getElementById('canvas');
+  const x = Math.max(20, rect.left - 220 + canvas.scrollLeft);
+  const y = Math.max(20, rect.top + 60 + canvas.scrollTop);
+  addNote(x, y, text);
+}
+
+function toggleDrawerPick() {
+  const menu = document.getElementById('drawerPickMenu');
+  const isOpen = menu.classList.contains('open');
+  menu.innerHTML = '';
+  if (!isOpen) {
+    if (drawers.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'drawer-pick-item';
+      empty.textContent = 'nenhuma gaveta ainda';
+      empty.style.opacity = '0.5';
+      menu.appendChild(empty);
+    } else {
+      drawers.forEach(d => {
+        const item = document.createElement('div');
+        item.className = 'drawer-pick-item';
+        const dot = document.createElement('span');
+        dot.className = 'drawer-pick-dot';
+        dot.style.background = d.color;
+        item.append(dot, d.name);
+        item.addEventListener('click', () => {
+          const text = getEditorSelection();
+          if (!text) { menu.classList.remove('open'); return; }
+          const notesArea = document.getElementById('drawer-notes-' + d.id);
+          addNoteToDrawer(d, notesArea, text);
+          if (!cabinetOpen) toggleCabinet();
+          if (!d.open) toggleDrawer(d.id);
+          saveDrawers(); saveData();
+          menu.classList.remove('open');
+        });
+        menu.appendChild(item);
+      });
+    }
+    menu.classList.add('open');
+    // fechar ao clicar fora
+    setTimeout(() => {
+      document.addEventListener('click', function closePick(e) {
+        if (!menu.contains(e.target)) {
+          menu.classList.remove('open');
+          document.removeEventListener('click', closePick);
+        }
+      });
+    }, 0);
+  } else {
+    menu.classList.remove('open');
+  }
+}
+
+// ── 2. SALVAR TXT ────────────────────────────────────────────
+
+function saveTXT() {
+  const title = document.getElementById('pageTitle').value || 'cozy-notes';
+  const content = document.getElementById('pageContent').innerText || '';
+  const noteTexts = [];
+  document.querySelectorAll('.note textarea').forEach(ta => {
+    if (ta.value.trim()) noteTexts.push('• ' + ta.value.trim());
+  });
+  drawers.forEach(d => {
+    if (d.notes.length > 0) {
+      noteTexts.push(`\n[${d.name}]`);
+      d.notes.forEach(n => noteTexts.push('  • ' + n.text));
+    }
+  });
+
+  let txt = `${title}\n${'─'.repeat(title.length)}\n\n${content}`;
+  if (noteTexts.length > 0) txt += `\n\n\n── notas ──\n${noteTexts.join('\n')}`;
+
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = title.replace(/[^a-zA-Z0-9_\-\u00C0-\u017E ]/g, '').trim() + '.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── 3. BUSCA NAS GAVETAS ─────────────────────────────────────
+
+function filterDrawers(query) {
+  const q = query.toLowerCase().trim();
+  drawers.forEach(d => {
+    const unit = document.getElementById('drawer-' + d.id);
+    if (!unit) return;
+    let anyMatch = false;
+    unit.querySelectorAll('.stored-note').forEach((chip, idx) => {
+      const note = d.notes[idx];
+      const text = note ? note.text : '';
+      const match = !q || text.toLowerCase().includes(q);
+      chip.classList.toggle('hidden', !match);
+      // highlight
+      const span = chip.querySelector('.stored-note-text');
+      if (span) {
+        if (q && match) {
+          const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+          span.innerHTML = text.replace(re, '<mark>$1</mark>');
+        } else {
+          span.textContent = text || '(nota vazia)';
+        }
+      }
+      if (match) anyMatch = true;
+    });
+    // auto-abre gaveta que tem match
+    if (q && anyMatch && !d.open) toggleDrawer(d.id);
+  });
+}
+
+// ── 4. TAGS NAS NOTAS FLUTUANTES ─────────────────────────────
+
+// Cada nota guarda um drawerId associado (tag)
+// Renderizado como badge colorido na nota
+// O header da gaveta tem botão "← devolver todas"
+
+function buildTagSelect(currentTag) {
+  const sel = document.createElement('select');
+  sel.className = 'note-tag-select';
+  const noneOpt = document.createElement('option');
+  noneOpt.value = '';
+  noneOpt.textContent = '+ tag gaveta';
+  sel.appendChild(noneOpt);
+  drawers.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d.id;
+    opt.textContent = d.name;
+    if (currentTag === d.id) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  return sel;
+}
+
+function addTagToNote(note, drawerId) {
+  const tagRow = note.querySelector('.note-tag-row');
+  if (!tagRow) return;
+  tagRow.innerHTML = '';
+  note._tagDrawerId = drawerId || null;
+
+  if (drawerId) {
+    const d = drawers.find(x => x.id === parseInt(drawerId));
+    if (d) {
+      const badge = document.createElement('span');
+      badge.className = 'note-tag-badge';
+      badge.style.background = d.color;
+      badge.title = 'clique para remover tag';
+      badge.innerHTML = `🗂 ${d.name} <span style="opacity:0.6">✕</span>`;
+      badge.addEventListener('click', () => addTagToNote(note, null));
+      tagRow.appendChild(badge);
+    }
+  }
+
+  // select para escolher/trocar tag
+  const sel = buildTagSelect(drawerId ? parseInt(drawerId) : null);
+  sel.addEventListener('change', () => {
+    addTagToNote(note, sel.value || null);
+    saveData();
+  });
+  sel.addEventListener('mousedown', e => e.stopPropagation());
+  tagRow.appendChild(sel);
+}
+
+// Botão "← devolver todas" na gaveta
+function addEjectAllBtn(header, d, notesArea) {
+  const btn = document.createElement('button');
+  btn.className = 'drawer-eject-btn';
+  btn.title = 'Devolver todas as notas com essa tag para o canvas';
+  btn.textContent = '↗ devolver tagged';
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    // ejetar notas da gaveta que têm tag == d.id
+    const toKeep = [];
+    d.notes.forEach(n => {
+      spawnNoteFromDrawer(n.text);
+    });
+    d.notes = toKeep;
+    notesArea.innerHTML = '';
+    updateDrawerCount(d);
+    saveDrawers(); saveData();
+  });
+  header.appendChild(btn);
+}
+
 loadDrawers();
 
 
