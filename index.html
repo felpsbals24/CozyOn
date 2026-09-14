@@ -183,6 +183,44 @@ input[type=range]::-webkit-slider-thumb {
 .counter { position: fixed; bottom: 16px; left: 16px; font-family: 'Caveat', cursive; font-size: 14px; color: #b09080; }
 .helper { position: fixed; bottom: 16px; right: 16px; font-family: 'Caveat', cursive; font-size: 13px; color: #b09080; background: #f0e4d4; border: 1px solid #d4c4b0; border-radius: 10px; padding: 5px 11px; pointer-events: none; }
 
+/* ── BOTÃO DE AÇÃO DO EDITOR ─────────────────────── */
+.editor-fab-wrap {
+  position: absolute; bottom: 18px; right: 18px;
+}
+.editor-fab {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #c4a882; border: 2px solid #b09070;
+  box-shadow: 2px 3px 0 #b09070;
+  font-size: 17px; cursor: pointer; color: #fff9f2;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.1s, background 0.1s;
+}
+.editor-fab:hover { background: #b49872; transform: scale(1.08); }
+.editor-fab.open { background: #8b6550; transform: rotate(45deg); }
+
+.editor-fab-menu {
+  position: absolute; bottom: 44px; right: 0;
+  background: #fff9f2; border: 1.5px solid #c9b8a8;
+  border-radius: 12px; box-shadow: 3px 4px 0 #c9b8a8;
+  padding: 6px 0; min-width: 190px;
+  display: none; flex-direction: column;
+  z-index: 200;
+}
+.editor-fab-menu.open { display: flex; }
+
+.fab-menu-item {
+  padding: 8px 15px;
+  font-family: 'Caveat', cursive; font-size: 15px; color: #5a3c2a;
+  cursor: pointer; display: flex; align-items: center; gap: 9px;
+  transition: background 0.1s; white-space: nowrap;
+}
+.fab-menu-item:hover { background: #f0e4d4; }
+.fab-menu-item:first-child { border-bottom: 1px solid #e8d8c8; margin-bottom: 3px; }
+.fab-menu-dot {
+  width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0;
+  border: 1.5px solid rgba(0,0,0,0.12);
+}
+
 /* ── ARMÁRIO DE GAVETAS ──────────────────────────────────── */
 
 /* Alça do armário (sempre visível) */
@@ -411,6 +449,12 @@ input[type=range]::-webkit-slider-thumb {
       <div class="main-editor" id="mainEditor">
         <input class="page-title" id="pageTitle" placeholder="Título da página..." value="Minha página cozy">
         <div class="page-content" id="pageContent" contenteditable="true" spellcheck="true">Escreva suas ideias aqui... ✦</div>
+
+        <!-- Botão de ação flutuante do editor -->
+        <div class="editor-fab-wrap" id="editorFabWrap">
+          <div class="editor-fab-menu" id="editorFabMenu"></div>
+          <button class="editor-fab" id="editorFab" title="Enviar para nota ou gaveta">+</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1185,6 +1229,104 @@ function loadDrawers() {
     });
   });
 }
+// ── BOTÃO DE AÇÃO DO EDITOR ─────────────────────────────────
+
+function getEditorText() {
+  const editor = document.getElementById('pageContent');
+  const sel = window.getSelection();
+  // se tem texto selecionado dentro do editor, usa só ele
+  if (sel && sel.rangeCount > 0) {
+    const range = sel.getRangeAt(0);
+    const selected = sel.toString().trim();
+    if (selected.length > 0 && editor.contains(range.commonAncestorContainer)) {
+      range.deleteContents(); // remove do editor
+      saveData();
+      return selected;
+    }
+  }
+  // sem seleção: pega tudo
+  return editor.innerText.trim();
+}
+
+function buildFabMenu() {
+  const menu = document.getElementById('editorFabMenu');
+  menu.innerHTML = '';
+
+  // opção 1: virar nota flutuante
+  const noteItem = document.createElement('div');
+  noteItem.className = 'fab-menu-item';
+  noteItem.innerHTML = `<span>📌</span> virar nota flutuante`;
+  noteItem.addEventListener('click', () => {
+    const text = getEditorText();
+    if (!text) { closeFabMenu(); return; }
+    // posiciona perto do editor
+    const editorEl = document.getElementById('mainEditor');
+    const canvas = document.getElementById('canvas');
+    const rect = editorEl.getBoundingClientRect();
+    const x = Math.max(20, rect.right + canvas.scrollLeft - rect.width - 240);
+    const y = Math.max(20, rect.top + canvas.scrollTop + 60);
+    addNote(x, y, text);
+    closeFabMenu();
+  });
+  menu.appendChild(noteItem);
+
+  // opção 2+: uma linha por gaveta
+  if (drawers.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'fab-menu-item';
+    empty.style.opacity = '0.45';
+    empty.style.cursor = 'default';
+    empty.innerHTML = `<span>🗂</span> nenhuma gaveta ainda`;
+    menu.appendChild(empty);
+  } else {
+    drawers.forEach(d => {
+      const item = document.createElement('div');
+      item.className = 'fab-menu-item';
+      const dot = document.createElement('span');
+      dot.className = 'fab-menu-dot';
+      dot.style.background = d.color;
+      const label = document.createElement('span');
+      label.textContent = d.name;
+      item.append(dot, label);
+      item.addEventListener('click', () => {
+        const text = getEditorText();
+        if (!text) { closeFabMenu(); return; }
+        const notesArea = document.getElementById('drawer-notes-' + d.id);
+        addNoteToDrawer(d, notesArea, text);
+        if (!cabinetOpen) toggleCabinet();
+        if (!d.open) toggleDrawer(d.id);
+        saveDrawers(); saveData();
+        closeFabMenu();
+      });
+      menu.appendChild(item);
+    });
+  }
+}
+
+function closeFabMenu() {
+  document.getElementById('editorFabMenu').classList.remove('open');
+  document.getElementById('editorFab').classList.remove('open');
+}
+
+document.getElementById('editorFab').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const menu = document.getElementById('editorFabMenu');
+  const isOpen = menu.classList.contains('open');
+  if (isOpen) {
+    closeFabMenu();
+  } else {
+    buildFabMenu(); // reconstrói pra pegar gavetas atuais
+    menu.classList.add('open');
+    document.getElementById('editorFab').classList.add('open');
+  }
+});
+
+// fechar ao clicar fora
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('editorFabWrap');
+  if (wrap && !wrap.contains(e.target)) closeFabMenu();
+});
+
 loadDrawers();
 
 
