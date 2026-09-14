@@ -448,13 +448,13 @@ input[type=range]::-webkit-slider-thumb {
     <div class="canvas" id="noteCanvas">
       <div class="main-editor" id="mainEditor">
         <input class="page-title" id="pageTitle" placeholder="Título da página..." value="Minha página cozy">
+        <div style="display:flex; align-items:center; gap:10px;">
+  <input class="page-title" id="pageTitle" ...>
+  <button class="editor-fab" id="editorFab" title="Enviar para nota ou gaveta">+</button>
+</div>
         <div class="page-content" id="pageContent" contenteditable="true" spellcheck="true">Escreva suas ideias aqui... ✦</div>
 
         <!-- Botão de ação flutuante do editor -->
-        <div class="editor-fab-wrap" id="editorFabWrap">
-          <div class="editor-fab-menu" id="editorFabMenu"></div>
-          <button class="editor-fab" id="editorFab" title="Enviar para nota ou gaveta">+</button>
-        </div>
       </div>
     </div>
   </div>
