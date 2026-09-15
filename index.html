@@ -51,6 +51,15 @@ body { background: #f5ede0; font-family: 'ComingSoon', serif; min-height: 100vh;
   src: url('E:\\vscodeprojects\\Bloco de notas\\ComingSoon.ttf') format('truetype');
 }
 
+#trash-history-btn {
+  position: fixed; bottom: 60px; left: 16px;
+  background: #e8d5c0; border: 1.5px solid #c9b8a8; border-radius: 20px;
+  padding: 5px 12px; font-family: 'Caveat', cursive; font-size: 14px;
+  color: #b09080; cursor: pointer; z-index: 300;
+  transition: background 0.1s, color 0.1s;
+}
+#trash-history-btn:hover { background: #d4c0ac; color: #7a5c45; }
+  
 /* Sound Panel Overlay */
 .panel-overlay {
   position: fixed; inset: 0; background: rgba(90,60,42,0.22);
@@ -530,9 +539,8 @@ input[type=range]::-webkit-slider-thumb {
 <button class="add-note-btn" onclick="addNote()" title="Nova nota">+</button>
 <div class="counter" id="counter">0 palavras</div>
 <div class="helper">✦ clique para escrever</div>
-  <div id="trash-bin" onclick="toggleTrashPanel()" title="Lixeira">
-  🗑<span id="trash-bin-label">lixeira</span>
-</div>
+ <div id="trash-bin">🗑<span id="trash-bin-label">lixeira</span></div>
+<button id="trash-history-btn" onclick="toggleTrashPanel()" title="Ver deletadas">🗑 lixeira</button>
 <div id="trash-panel">
   <div id="trash-panel-header">
     🗑 deletadas
@@ -1063,8 +1071,24 @@ document.addEventListener('mousemove', (e)=>{
 
 document.addEventListener('mouseup', (e)=>{
   if (!dragNote) return;
+  const bin = document.getElementById('trash-bin');
 
-  // check if dropped on a drawer
+  // Verificar se soltou na lixeira
+  const br = bin.getBoundingClientRect();
+  const onBin = e.clientX>=br.left && e.clientX<=br.right && e.clientY>=br.top && e.clientY<=br.bottom;
+  if (onBin) {
+    const text = dragNote.querySelector('textarea')?.value || '';
+    const done = dragNote.classList.contains('is-task');
+    trashItems.unshift({ text, done, ts: Date.now() });
+    if (trashItems.length > 30) trashItems.pop();
+    saveTrash(); renderTrashList();
+    dragNote.remove(); saveData();
+    dragNote = null; noteDragTarget = null;
+    bin.classList.remove('visible','hover');
+    return;
+  }
+
+  // Verificar se soltou numa gaveta
   let droppedInDrawer = false;
   document.querySelectorAll('.drawer-unit').forEach(unit => {
     const r = unit.getBoundingClientRect();
@@ -1076,7 +1100,6 @@ document.addEventListener('mouseup', (e)=>{
         dragNote.remove();
         const notesArea = document.getElementById('drawer-notes-' + drawerId);
         addNoteToDrawer(d, notesArea, text);
-        // auto-open the drawer
         if (!d.open) toggleDrawer(drawerId);
         saveDrawers(); saveData();
         droppedInDrawer = true;
@@ -1089,8 +1112,8 @@ document.addEventListener('mouseup', (e)=>{
     dragNote.classList.remove('dragging');
     saveData();
   }
-  dragNote = null;
-  noteDragTarget = null;
+  dragNote = null; noteDragTarget = null;
+  bin.classList.remove('visible','hover');
 });
 
 // Init sliders visual
