@@ -1700,6 +1700,8 @@ renderTrashList();
   // ── AGENDA ───────────────────────────────────────────────────
 const AGENDA_KEY = 'cozy_agenda_v1';
 let agendaEvents = [];
+  let agendaDayNotes = {};
+try { agendaDayNotes = JSON.parse(localStorage.getItem('cozy_day_notes_v1')||'{}'); } catch(e) {}
 try { agendaEvents = JSON.parse(localStorage.getItem(AGENDA_KEY)||'[]'); } catch(e) {}
 
 let agendaView = 'month';   // 'month' | 'week' | 'day'
@@ -1811,34 +1813,29 @@ function renderAgenda() {
       });
     });
     html += '</div>';
-    body.innerHTML = html;
+        body.innerHTML = html;
+    // salvar anotação ao digitar
+    const ta = document.getElementById('day-note-area');
+    if (ta) {
+      ta.addEventListener('input', () => {
+        agendaDayNotes[dk] = ta.value;
+        localStorage.setItem('cozy_day_notes_v1', JSON.stringify(agendaDayNotes));
+      });
+    }
+    return; // já fez o innerHTML, sai
 
-  } else { // day
+    } else { // day
     const dk = dateKey(agendaCursor);
     const d = agendaCursor;
     period.textContent = `${d.getDate()} de ${MONTHS[d.getMonth()]} de ${d.getFullYear()}`;
     const evts = eventsOn(dk);
-    let html = '';
-    const hours = Array.from({length:24}, (_,i) => i);
-    hours.forEach(h => {
-      const slot = `${String(h).padStart(2,'0')}:00`;
-      const slotEvts = evts.filter(e => (e.time||'').startsWith(String(h).padStart(2,'0')));
-      let evtHtml = slotEvts.map((ev,i) => {
-        const realIdx = agendaEvents.findIndex(x => x === ev);
-        return `<div class="day-event">
-          <span>${ev.time||''} ${ev.title}${ev.desc ? ' — <small>'+ev.desc+'</small>' : ''}</span>
-          <button class="day-event-del" onclick="deleteEvent(${realIdx});event.stopPropagation()">✕</button>
-        </div>`;
-      }).join('');
-      html += `<div class="day-slot" onclick="openEvtModal('${dk}','${slot}')">
-        <div class="day-slot-time">${slot}</div>
-        <div class="day-slot-events">${evtHtml}</div>
-      </div>`;
-    });
-    body.innerHTML = html;
-  }
-}
-
+    const savedNote = (agendaDayNotes[dk] || '');
+    let html = `<textarea id="day-note-area" placeholder="anotações do dia..." style="
+      width:100%; min-height:90px; background:#f5ede0; border:1.5px solid #e0d0c0;
+      border-radius:10px; padding:10px 12px; font-family:'Caveat',cursive; font-size:15px;
+      color:#5a3c2a; outline:none; resize:vertical; margin-bottom:14px; box-sizing:border-box;
+      line-height:1.6;">${savedNote}</textarea>
+    <div style="font-family:'Caveat',cursive;font-size:13px;color:#b09080;margin-bottom:8px;padding-left:2px;">✦ horários</div>`;
 function dayClick(dk) {
   agendaCursor = new Date(dk+'T12:00:00');
   setAgendaView('day');
