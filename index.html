@@ -178,7 +178,12 @@ input[type=range]::-webkit-slider-thumb {
 .note-delete:hover { opacity: 0.8; }
 .note-content { width: 100%; background: none; border: none; outline: none; font-family: 'ComingSoon', serif; font-size: 14px; line-height: 1.7; resize: none; min-height: 80px; cursor: text; }
 .note-resize { position: absolute; bottom: 4px; right: 6px; font-size: 11px; opacity: 0.3; }
-
+.note-expand-btn {
+  background: none; border: none; cursor: pointer; font-size: 13px;
+  opacity: 0.4; color: #5a3c2a; transition: opacity 0.15s;
+}
+.note-expand-btn:hover { opacity: 0.9; }
+.note.expanded .note-content { min-height: 260px; }
 .add-note-btn {
   position: fixed; bottom: 60px; right: 20px; width: 46px; height: 46px;
   border-radius: 50%; background: #c4a882; border: 2px solid #b09070;
@@ -1184,7 +1189,8 @@ function addNote(x, y, text, done) {
   note.style.zIndex = ++highZ;
  note.innerHTML = `<div class="note-header">
     <button class="note-task-btn" title="marcar como concluída">✔</button>
-    <button class="note-delete" onclick="deleteNote(this)">✕</button>
+        <button class="note-expand-btn" title="expandir nota">⤢</button>
+        <button class="note-delete" onclick="deleteNote(this)">✕</button>
   </div>
   <textarea class="note-content" placeholder="nota rápida..." style="color:${noteTxtColors[ci]}">${text||''}</textarea>
   <div class="note-resize">⬘</div>`;
@@ -1196,6 +1202,15 @@ taskBtn.addEventListener('click', (e) => {
   taskBtn.classList.toggle('done', isDone);
   saveData();
 });
+    const expandBtn = note.querySelector('.note-expand-btn');
+  expandBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    note.classList.toggle('expanded');
+    expandBtn.textContent = note.classList.contains('expanded') ? '⤡' : '⤢';
+    const ta = note.querySelector('textarea');
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+  });
   const ta = note.querySelector('textarea');
   note.querySelector('.note-header').addEventListener('mousedown', startDrag);
   note.addEventListener('mousedown', ()=>{ note.style.zIndex = ++highZ; });
@@ -1479,6 +1494,16 @@ function addChipToDrawer(notesArea, d, text) {
   });
 
   chip.append(preview, popBtn);
+    const copyBtn = document.createElement('button');
+  copyBtn.className = 'stored-note-pop';
+  copyBtn.title = 'copiar para nota flutuante';
+  copyBtn.textContent = '⧉';
+  copyBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    spawnNoteFromDrawer(text); // cria cópia sem remover o original
+    saveData();
+  });
+  chip.append(preview, copyBtn, popBtn);
   notesArea.appendChild(chip);
 }
 
